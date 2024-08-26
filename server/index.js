@@ -1,12 +1,25 @@
 import express from "express";
 import cors from "cors";
 import { SERVER_PORT } from "./config.js";
+import { connectDB } from "./db.js";
+import { User } from "./models/User.js";
 const app = express();
 
 app.use(cors());
 
-app.get("/test", (req, res) => {
-  return res.json({ message: "ok" });
+connectDB().then(() => {
+  console.log("DB CONNECTED!");
+});
+
+app.get("/test", async (req, res) => {
+  const user = await User.create({
+    email: "sad",
+    password: "sad2",
+    role: "Admin",
+    username: "dsa",
+  });
+
+  return res.json(user);
 });
 
 app.listen(SERVER_PORT, () => {
