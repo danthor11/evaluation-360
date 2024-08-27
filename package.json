@@ -2,7 +2,6 @@
   "name": "evaluation-app",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "web": "npm run dev --workspace client",
     "api": "npm run dev --workspace server"

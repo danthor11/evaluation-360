@@ -21,7 +21,7 @@ userRouter.post("/api/auth/login", async (req, res) => {
         expiresIn: "1h",
       }
     );
-    res.json({ token, username: user.username, role: user.role });
+    res.json(token);
   } catch (error) {
     const message = error?.message
       ? error.message

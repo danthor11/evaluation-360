@@ -3,16 +3,21 @@ import { Employee } from "./Employee.js";
 
 const EvaluationSchema = new Schema({
   date: { type: Date, required: true },
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  score: { type: Number, required: true },
-  evaluator_role: {
-    type: String,
-    enum: ["Supervisor", "Self", "Colleague", "Subordinate"],
-    required: true,
-  },
-  employee: Employee,
-  evaluator: Employee,
+  category: { type: mongoose.Schema.Types.ObjectId, ref: "Category" },
+  score: { type: Number },
+  employee: { type: mongoose.Schema.Types.ObjectId, ref: "Employee" },
+  evaluators: [
+    {
+      evaluator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      role: {
+        type: String,
+        enum: ["Supervisor", "Self", "Colleague", "Subordinate"],
+        required: true,
+      },
+    },
+  ],
+  status: { type: String, enum: ["Pending", "Completed"], default: "Pending" },
+  responses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Response" }],
 });
 
 export const Evaluation = model("Evaluation", EvaluationSchema);

@@ -15,15 +15,9 @@ connectDB().then(() => {
 });
 
 app.use(userRouter);
-app.get("/test", verifyAuthentication, async (req, res) => {
-  const user = await User.create({
-    email: "sad",
-    password: "sad2",
-    role: "Admin",
-    username: "dsa",
-  });
 
-  return res.json(user);
+app.get("/test", verifyAuthentication, async (req, res) => {
+  return res.json({});
 });
 
 app.listen(SERVER_PORT, () => {
