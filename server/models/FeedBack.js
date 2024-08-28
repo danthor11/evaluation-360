@@ -1,12 +1,10 @@
 import { model, Schema } from "mongoose";
-import { Employee } from "./Employee.js";
-import { Evaluation } from "./Evaluation.js";
 
 const FeedBackSchema = new Schema({
-  date: { type: Date, default: Date.now() },
+  date: { type: Date },
   comment: { type: String, required: true },
-  author: Employee,
-  evaluation: Evaluation,
+  author: { type: Schema.Types.ObjectId, ref: "Employee" },
+  evaluation: { type: Schema.Types.ObjectId, ref: "Evaluation" },
 });
 
 export const FeedBack = model("FeedBack", FeedBackSchema);

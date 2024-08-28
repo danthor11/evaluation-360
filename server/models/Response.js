@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const responseSchema = new mongoose.Schema({
   evaluation: { type: mongoose.Schema.Types.ObjectId, ref: "Evaluation" },
@@ -8,4 +8,4 @@ const responseSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-module.exports = mongoose.model("Response", responseSchema);
+export const Response = mongoose.model("Response", responseSchema);

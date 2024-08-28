@@ -2,37 +2,42 @@ import express from "express";
 import { Evaluation } from "../models/Evaluation.js";
 import { Question } from "../models/Questions.js";
 import { Category } from "../models/Category.js";
-import Response from "../models/Response.js";
+import { Response } from "../models/Response.js";
 import { FeedBack } from "../models/FeedBack.js";
-
+import { verifyAuthentication } from "./middleware.js";
+import { User } from "../models/User.js";
+import { Employee } from "../models/Employee.js";
 export const evaluationRouter = express.Router();
 
 //Asignacion y creacion de evaluacion
 evaluationRouter.post("/api/evaluations", async (req, res) => {
-  const { name, description, employee_id, evaluators, questions } = req.body;
+  const { category, evaluationDate, employeeEvaluate, evaluators, questions } =
+    req.body;
+  const newQuestions = questions.filter((q) => q.name);
+
   try {
     const questionsCreated = await Question.insertMany(
-      questions.map((q) => ({
-        text: q.text,
+      newQuestions.map((q) => ({
+        text: q.name,
         type: q.type,
         options: q.options || [],
       }))
     );
 
-    const category = await Category.create({
-      name,
-      description,
+    const categoryCreated = await Category.create({
+      name: category.name,
+      description: category.description,
       questions: questionsCreated,
     });
 
     const evaluation = await Evaluation.create({
-      category,
-      date: new Date(),
+      category: categoryCreated,
+      date: evaluationDate,
       evaluators: evaluators.map((e) => ({
-        evaluator: e.evaluator,
+        evaluator: e.id,
         role: e.role,
       })),
-      employee: employee_id,
+      employee: employeeEvaluate,
     });
 
     return res.status(201).json(evaluation);
@@ -62,7 +67,7 @@ evaluationRouter.post("/api/evaluations/:id/response", async (req, res) => {
     // TODO:  ACTUALIZAR SCORE
     const evaluation = await Evaluation.findOneAndUpdate(
       { _id: evaluation_id },
-      { responses: responsesCreated }
+      { responses: responsesCreated, status: "Completed" }
     );
     return res.status(201).json(evaluation);
   } catch (error) {
@@ -74,10 +79,56 @@ evaluationRouter.post("/api/evaluations/:id/response", async (req, res) => {
   }
 });
 
+evaluationRouter.get("/api/evaluations", async (req, res) => {
+  try {
+    console.log("DDD");
+    const evaluations = await Evaluation.find({})
+      .populate({ path: "category" })
+      .populate("employee");
+
+    return res.json(evaluations);
+  } catch (error) {
+    const message = error?.message
+      ? error.message
+      : "An error occurred on the server. Please try again later.";
+    res.status(401);
+    res.json({ message });
+  }
+});
+
+evaluationRouter.get(
+  "/api/evaluations/manager",
+  verifyAuthentication,
+  async (req, res) => {
+    try {
+      const user = await User.findOne({ username: req.user.username });
+      const employee = await Employee.findOne({ user: user });
+      const evaluations = await Evaluation.find({
+        evaluators: {
+          $elemMatch: { evaluator: employee._id },
+        },
+      })
+        .populate("category")
+        .populate("employee");
+
+      return res.json(evaluations);
+    } catch (error) {
+      const message = error?.message
+        ? error.message
+        : "An error occurred on the server. Please try again later.";
+      res.status(401);
+      res.json({ message });
+    }
+  }
+);
+
 evaluationRouter.get("/api/evaluations/:id", async (req, res) => {
   const id = req.params.id;
   try {
-    const evaluation = await Evaluation.findById(id);
+    if (!id) throw Error("Id is required");
+    const evaluation = await Evaluation.findById(id)
+      .populate({ path: "category", populate: { path: "questions" } })
+      .populate("employee");
     return res.json(evaluation);
   } catch (error) {
     const message = error?.message
@@ -90,7 +141,7 @@ evaluationRouter.get("/api/evaluations/:id", async (req, res) => {
 
 evaluationRouter.put("/api/evaluations/:id", async (req, res) => {
   try {
-    //TODO
+    if (!id) throw Error("Id is required");
     const employees = await Employee.find({});
     return employees;
   } catch (error) {
@@ -104,8 +155,13 @@ evaluationRouter.put("/api/evaluations/:id", async (req, res) => {
 
 evaluationRouter.get("/api/evaluations/employee/:id", async (req, res) => {
   const id = req.params.id;
+  console.log(id);
   try {
-    const evaluations = await Evaluation.find({ employee: id });
+    if (!id) throw Error("Id is required");
+    const evaluations = await Evaluation.find({ employee: id })
+      .populate("category")
+      .populate("employee");
+
     return res.json(evaluations);
   } catch (error) {
     const message = error?.message
@@ -116,9 +172,6 @@ evaluationRouter.get("/api/evaluations/employee/:id", async (req, res) => {
   }
 });
 
-// comment: { type: Number, required: true },
-// author: Employee,
-// evaluation: Evaluation,
 evaluationRouter.post("/api/feedback", async (req, res) => {
   const { evaluation_id, author, comment } = req.body;
 

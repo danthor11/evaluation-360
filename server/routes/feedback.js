@@ -3,17 +3,13 @@ import { FeedBack } from "../models/FeedBack.js";
 
 export const fbRouter = express.Router();
 
-// ○ POST /api/feedback: Enviar feedback para una evaluación
-// ○ GET /api/reports/employee/:id: Generar reporte de evaluación para un
-// empleado
-
 fbRouter.post("/api/feedback", async (req, res) => {
-  const { date, comment, author, evaluation } = req.body;
+  const { comment, author, evaluation } = req.body;
   try {
     const feedback = await FeedBack.create({
+      date: Date.now(),
       author,
       comment,
-      date,
       evaluation,
     });
     return res.json(feedback);

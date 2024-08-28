@@ -21,7 +21,7 @@ userRouter.post("/api/auth/login", async (req, res) => {
         expiresIn: "1h",
       }
     );
-    res.json(token);
+    res.json({ username, role: user.role, token });
   } catch (error) {
     const message = error?.message
       ? error.message
@@ -35,7 +35,7 @@ userRouter.post("/api/auth/register", async (req, res) => {
   const { body } = req;
 
   try {
-    const { username, email, password, role } = body;
+    const { username, email, password, role = "" } = body;
 
     const exists = await User.findOne({
       $or: [{ username: username }, { email: email }],
@@ -48,11 +48,29 @@ userRouter.post("/api/auth/register", async (req, res) => {
       username,
       email,
       password: hashedPassword,
-      role,
+      role: role ? role : "Employee",
     });
 
     return res.json(user);
   } catch (error) {
-    return res.status(400).json(error);
+    const message = error?.message
+      ? error.message
+      : "An error occurred on the server. Please try again later.";
+    res.status(400);
+    res.json({ message });
+  }
+});
+
+userRouter.get("/api/users", async (req, res) => {
+  try {
+    const user = await User.find({});
+
+    return res.json(user);
+  } catch (error) {
+    const message = error?.message
+      ? error.message
+      : "An error occurred on the server. Please try again later.";
+    res.status(400);
+    res.json({ message });
   }
 });
